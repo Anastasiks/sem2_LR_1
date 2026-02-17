@@ -1,26 +1,61 @@
+import docx
+from time import *
+from docx import Document
+import Levenshtein
 from fuzzywuzzy import fuzz
-from fuzzywuzzy import process
-a = fuzz.ratio('Привет мир', 'Привет мир')
-print(a)
+def get_text_from_docx(path):
+    doc = Document(path)
+    return "\n".join([para.text for para in doc.paragraphs])
 
-a = fuzz.ratio('Привет мир', 'Привт кир')
-print(a)
 
-a = fuzz.partial_ratio('Привет мир', 'Привет мир!')
-print(a)
+file1 = "docx1.docx"
+file2 = "docx2.docx"
 
-a = fuzz.token_sort_ratio('Привет наш мир', 'мир наш Привет')
-print(a)
+text1 = get_text_from_docx(file1)
+text2 = get_text_from_docx(file2)
 
-a = fuzz.token_sort_ratio('1 2 Привет наш мир', '1 мир наш 2 ПриВЕт')
-print(a)
+time1 = time()
+distance = Levenshtein.distance(text1, text2)
+time2 = time()
 
-a = fuzz.token_set_ratio('Привет наш мир', 'мир мир наш наш наш ПриВЕт')
-print(a)
+similarity = Levenshtein.ratio(text1, text2)*100
 
-a = fuzz.WRatio('Привет наш мир', '!ПриВЕт наш мир!')
-print(a)
+print(f"Расстояние Левенштейна: {distance}")
+print(f"сходство в процентах {similarity}")
+print(f"прошло времени {time2 - time1}")
 
-city = ["Москва", "Санкт-Петербург", "Саратов", "Краснодар", "Воронеж", "Омск", "Екатеринбург", "Орск", "Красногорск", "Красноярск", "Самара"]
-a = process.extractOne("Краногрск", city)
-print(a)
+
+
+
+def get_text(path):
+    doc = Document(path)
+    return "\n".join([p.text for p in doc.paragraphs])
+
+text1 = get_text("docx1.docx")
+text2 = get_text("docx2.docx")
+time3 = time()
+ratio = fuzz.ratio(text1, text2)
+time4 = time()
+print(f"fuzzy: {ratio}")
+print(f"за  {time4 - time3}")
+
+def levenstein(text1, text2):
+    n, m = len(text1), len(text2)
+    if n > m:
+        text1, text2 = text2, text1
+        n, m = m, n
+
+    current_row = range(n + 1)
+    for i in range(1, m + 1):
+        previous_row, current_row = current_row, [i] + [0] * n
+        for j in range(1, n + 1):
+            add, delete, change = previous_row[j] + 1, current_row[j - 1] + 1, previous_row[j - 1]
+            if text1[j - 1] != text2[i - 1]:
+                change += 1
+            current_row[j] = min(add, delete, change)
+
+    return current_row[n]
+time5 = time()
+print(f"через дп {levenstein(text1, text2)}")
+time6 = time()
+print(f"за {time6 - time5}")
